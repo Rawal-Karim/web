@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Spaceship Battle Game</title>
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+            background: black;
+            color: white;
+            font-family: 'Courier New', Courier, monospace;
+        }
+        #gameCanvas {
+            display: block;
+            margin: auto;
+            border: 3px solid #00ff00;
+        }
+        #scoreBoard {
+            position: fixed;
+            top: 10px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 24px;
+            text-align: center;
+        }
+        #instructions {
+            position: fixed;
+            bottom: 10px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 18px;
+        }
+    </style>
+</head>
+<body>
+    <div id="scoreBoard">Score: 0</div>
+    <div id="instructions">Use Arrow Keys to move | Space to shoot</div>
+    <canvas id="gameCanvas" width="800" height="600"></canvas>
+
+    <script>
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        
+        let score = 0;
+        let level = 1;
+        let isGameOver = false;
+        let player = { x: canvas.width / 2 - 25, y: canvas.height - 50, width: 50, height: 20, speed: 5 };
+        let bullets = [];
+        let enemies = [];
+        let keys = {};
+        let stars = [];
+
+        // Retro-futuristic sound
+        const shootSound = new Audio('./shoot.mp3'); // Use a locally hosted sound file
+
+        function createStars() {
+            for (let i = 0; i < 100; i++) {
+                stars.push({
+                    x: Math.random() * canvas.width,
+                    y: Math.random() * canvas.height,
+                    radius: Math.random() * 2,
+                    speed: Math.random() * 0.5 + 0.2
+                });
+            }
+        }
+
+        function drawStars() {
+            ctx.fillStyle = 'white';
+            stars.forEach(star => {
+                ctx.beginPath();
+                ctx.arc(star.x, star.y, star.radius, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.closePath();
+            });
+        }
+
+        function updateStars() {
+            stars.forEach(star => {
+                star.y += star.speed;
+                if (star.y > canvas.height) {
+                    star.y = 0;
+                    star.x = Math.random() * canvas.width;
+                }
+            });
+        }
+
+        function createEnemy() {
+            const x = Math.random() * (canvas.width - 40);
+            const speed = 4 + level; // Increased speed multiplier for faster gameplay
+            enemies.push({ x, y: -40, width: 40, height: 40, speed });
+        }
+
+        function drawPlayer() {
+            ctx.fillStyle = '#00ff00';
+            ctx.fillRect(player.x, player.y, player.width, player.height);
+        }
+
+        function drawBullets() {
+            bullets.forEach(bullet => {
+                ctx.fillStyle = '#ff0000';
+                ctx.fillRect(bullet.x, bullet.y, bullet.width, bullet.height);
+            });
+        }
+
+        function drawEnemies() {
+            enemies.forEach(enemy => {
+                ctx.fillStyle = '#ff9900';
+                ctx.fillRect(enemy.x, enemy.y, enemy.width, enemy.height);
+            });
+        }
+
+        function movePlayer() {
+            if (keys['ArrowLeft'] && player.x > 0) player.x -= player.speed;
+            if (keys['ArrowRight'] && player.x + player.width < canvas.width) player.x += player.speed;
+            if (keys['ArrowUp'] && player.y > 0) player.y -= player.speed;
+            if (keys['ArrowDown'] && player.y + player.height < canvas.height) player.y += player.speed;
+        }
+
+        function updateBullets() {
+            bullets.forEach(bullet => bullet.y -= 10); // Increased bullet speed
+            bullets = bullets.filter(bullet => bullet.y > 0);
+        }
+
+        function updateEnemies() {
+            enemies.forEach(enemy => enemy.y += enemy.speed);
+            enemies = enemies.filter(enemy => enemy.y < canvas.height);
+        }
+
+        function detectCollisions() {
+            // Bullet and enemy collision
+            bullets.forEach((bullet, bIndex) => {
+                enemies.forEach((enemy, eIndex) => {
+                    if (
+                        bullet.x < enemy.x + enemy.width &&
+                        bullet.x + bullet.width > enemy.x &&
+                        bullet.y < enemy.y + enemy.height &&
+                        bullet.y + bullet.height > enemy.y
+                    ) {
+                        bullets.splice(bIndex, 1);
+                        enemies.splice(eIndex, 1);
+                        score += 10;
+                        document.getElementById('scoreBoard').innerText = `Score: ${score} | Level: ${level}`;
+
+                        // Level up every 50 points
+                        if (score % 50 === 0) level++;
+                    }
+                });
+            });
+
+            // Player and enemy collision
+            enemies.forEach(enemy => {
+                if (
+                    player.x < enemy.x + enemy.width &&
+                    player.x + player.width > enemy.x &&
+                    player.y < enemy.y + enemy.height &&
+                    player.y + player.height > enemy.y
+                ) {
+                    isGameOver = true;
+                }
+            });
+        }
+
+        function gameOver() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            ctx.fillStyle = 'white';
+            ctx.font = '48px Courier New';
+            ctx.textAlign = 'center';
+            ctx.fillText('GAME OVER', canvas.width / 2, canvas.height / 2);
+            ctx.font = '24px Courier New';
+            ctx.fillText(`Final Score: ${score}`, canvas.width / 2, canvas.height / 2 + 40);
+            ctx.fillText('Press R to Restart', canvas.width / 2, canvas.height / 2 + 80);
+        }
+
+        function resetGame() {
+            score = 0;
+            level = 1;
+            isGameOver = false;
+            player = { x: canvas.width / 2 - 25, y: canvas.height - 50, width: 50, height: 20, speed: 5 };
+            bullets = [];
+            enemies = [];
+            stars = [];
+            createStars();
+            document.getElementById('scoreBoard').innerText = `Score: ${score} | Level: ${level}`;
+            gameLoop();
+        }
+
+        function gameLoop() {
+            if (isGameOver) {
+                gameOver();
+                return;
+            }
+
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            drawStars();
+            drawPlayer();
+            drawBullets();
+            drawEnemies();
+            movePlayer();
+            updateStars();
+            updateBullets();
+            updateEnemies();
+            detectCollisions();
+
+            requestAnimationFrame(gameLoop);
+        }
+
+        setInterval(createEnemy, 800); // Reduced interval for faster enemy spawn
+
+        document.addEventListener('keydown', e => {
+            keys[e.key] = true;
+            if (e.key === ' ') {
+                bullets.push({ x: player.x + 22, y: player.y - 10, width: 6, height: 10 });
+                shootSound.play();
+            }
+            if (isGameOver && e.key.toLowerCase() === 'r') {
+                resetGame();
+            }
+        });
+
+        document.addEventListener('keyup', e => {
+            keys[e.key] = false;
+        });
+
+        createStars();
+        gameLoop();
+    </script>
+</body>
+</html>

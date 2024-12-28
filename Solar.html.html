@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>3D Solar System and Quiz</title>
+  <style>
+    body {
+      margin: 0;
+      overflow: hidden;
+      font-family: Arial, sans-serif;
+    }
+    #quiz {
+      position: absolute;
+      top: 10px;
+      left: 10px;
+      background: rgba(0, 0, 0, 0.8);
+      color: white;
+      padding: 20px;
+      border-radius: 8px;
+      display: none;
+      max-width: 300px;
+      box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+    }
+    #quiz h3 {
+      margin-top: 0;
+      text-align: center;
+      font-size: 18px;
+      color: #ffd700;
+    }
+    #quiz button {
+      margin: 10px 0;
+      padding: 10px;
+      width: 100%;
+      font-size: 14px;
+      color: white;
+      background: #333;
+      border: 1px solid #555;
+      border-radius: 4px;
+      cursor: pointer;
+      transition: background 0.3s;
+    }
+    #quiz button:hover {
+      background: #555;
+    }
+    #quiz #nextQuestion {
+      background: #ffd700;
+      color: black;
+      font-weight: bold;
+    }
+    #quiz #nextQuestion:hover {
+      background: #ffc107;
+    }
+  </style>
+</head>
+<body>
+  <canvas id="solarSystem"></canvas>
+  <div id="quiz">
+    <h3>Solar System Quiz</h3>
+    <p id="question"></p>
+    <div id="options"></div>
+    <button id="nextQuestion">Next</button>
+  </div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/110/three.min.js"></script>
+  <script>
+    // Basic Three.js setup
+    const canvas = document.querySelector('#solarSystem');
+    const scene = new THREE.Scene();
+    const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+    const renderer = new THREE.WebGLRenderer({ canvas });
+    renderer.setSize(window.innerWidth, window.innerHeight);
+
+    // Add Galaxy Background
+    const loader = new THREE.TextureLoader();
+    loader.load('https://cdn.jsdelivr.net/gh/mrdoob/three.js@r146/examples/textures/space.jpg', texture => {
+      scene.background = texture;
+    });
+
+    // Add Sun
+    const sunGeometry = new THREE.SphereGeometry(5, 32, 32);
+    const sunMaterial = new THREE.MeshBasicMaterial({ color: 0xffff00 });
+    const sun = new THREE.Mesh(sunGeometry, sunMaterial);
+    scene.add(sun);
+
+    // Add Planets
+    const planets = [];
+    const planetData = [
+      { color: 0xaaaaaa, size: 0.5, distance: 8 }, // Mercury
+      { color: 0xffa500, size: 1, distance: 10 }, // Venus
+      { color: 0x0000ff, size: 1.2, distance: 12 }, // Earth
+      { color: 0xff0000, size: 0.8, distance: 16 }, // Mars
+      { color: 0xffd700, size: 2.5, distance: 20 }, // Jupiter
+      { color: 0xffa07a, size: 2, distance: 25 }, // Saturn
+      { color: 0x40e0d0, size: 1.7, distance: 30 }, // Uranus
+      { color: 0x191970, size: 1.6, distance: 35 }, // Neptune
+      { color: 0xffffff, size: 0.3, distance: 40 }, // Pluto
+    ];
+
+    planetData.forEach(data => {
+      const geometry = new THREE.SphereGeometry(data.size, 32, 32);
+      const material = new THREE.MeshBasicMaterial({ color: data.color });
+      const planet = new THREE.Mesh(geometry, material);
+      planet.userData = { distance: data.distance, angle: Math.random() * Math.PI * 2 };
+      planets.push(planet);
+      scene.add(planet);
+    });
+
+    // Add Moving Stars
+    const stars = [];
+    for (let i = 0; i < 100; i++) {
+      const geometry = new THREE.SphereGeometry(0.1, 8, 8);
+      const material = new THREE.MeshBasicMaterial({ color: 0xffffff });
+      const star = new THREE.Mesh(geometry, material);
+      star.position.set(
+        Math.random() * 200 - 100,
+        Math.random() * 200 - 100,
+        Math.random() * 200 - 100
+      );
+      star.userData = { speed: Math.random() * 0.02 + 0.01 };
+      stars.push(star);
+      scene.add(star);
+    }
+
+    // Add Asteroids, Meteoroids, and Satellites
+    const objects = [];
+    for (let i = 0; i < 50; i++) {
+      const geometry = new THREE.SphereGeometry(Math.random() * 0.3 + 0.1, 8, 8);
+      const material = new THREE.MeshBasicMaterial({ color: 0xaaaaaa });
+      const object = new THREE.Mesh(geometry, material);
+      object.position.set(
+        Math.random() * 100 - 50,
+        Math.random() * 100 - 50,
+        Math.random() * 100 - 50
+      );
+      object.userData = { speed: Math.random() * 0.01 + 0.005 };
+      objects.push(object);
+      scene.add(object);
+    }
+
+    camera.position.z = 50;
+
+    function animate() {
+      requestAnimationFrame(animate);
+
+      // Animate Planets
+      planets.forEach(planet => {
+        planet.userData.angle += 0.01 / planet.userData.distance; // Adjust speed based on distance
+        planet.position.set(
+          planet.userData.distance * Math.cos(planet.userData.angle),
+          0,
+          planet.userData.distance * Math.sin(planet.userData.angle)
+        );
+      });
+
+      // Animate Stars
+      stars.forEach(star => {
+        star.position.z += star.userData.speed;
+        if (star.position.z > 100) star.position.z = -100;
+      });
+
+      // Animate Asteroids, Meteoroids, and Satellites
+      objects.forEach(object => {
+        object.position.x += object.userData.speed;
+        if (object.position.x > 50) object.position.x = -50;
+      });
+
+      renderer.render(scene, camera);
+    }
+
+    animate();
+
+    // Quiz Logic
+    const quiz = document.querySelector('#quiz');
+    const questionEl = document.querySelector('#question');
+    const optionsEl = document.querySelector('#options');
+    const nextButton = document.querySelector('#nextQuestion');
+
+    const questions = [
+      { q: "Which planet is known as the Red Planet?", a: ["Venus", "Mars", "Jupiter", "Saturn"], correct: 1 },
+      { q: "Which is the largest planet in the solar system?", a: ["Earth", "Jupiter", "Saturn", "Neptune"], correct: 1 },
+      { q: "What is the main component of the Sun?", a: ["Oxygen", "Hydrogen", "Nitrogen", "Helium"], correct: 1 },
+      { q: "Which planet has the most moons?", a: ["Jupiter", "Saturn", "Uranus", "Neptune"], correct: 0 },
+      { q: "What is the name of Earth's only natural satellite?", a: ["Moon", "Phobos", "Deimos", "Europa"], correct: 0 },
+      { q: "What is the smallest planet in the solar system?", a: ["Mercury", "Mars", "Pluto", "Earth"], correct: 0 },
+      { q: "Which planet has a prominent ring system?", a: ["Neptune", "Jupiter", "Saturn", "Uranus"], correct: 2 },
+      { q: "What is the approximate age of the solar system?", a: ["4.6 billion years", "3.2 billion years", "6.8 billion years", "2.5 billion years"], correct: 0 },
+      { q: "Which planet rotates on its side?", a: ["Venus", "Uranus", "Neptune", "Mars"], correct: 1 },
+      { q: "What is the Kuiper Belt?", a: ["A region of asteroids", "A region of icy bodies beyond Neptune", "A ring of meteoroids", "A satellite of Jupiter"], correct: 1 },
+    ];
+
+    let currentQuestion = 0;
+
+    function loadQuestion(index) {
+      const question = questions[index];
+      questionEl.textContent = question.q;
+      optionsEl.innerHTML = '';
+      question.a.forEach((option, i) => {
+        const button = document.createElement('button');
+        button.textContent = option;
+        button.onclick = () => {
+          if (i === question.correct) {
+            alert('Correct!');
+          } else {
+            alert('Incorrect!');
+          }
+        };
+        optionsEl.appendChild(button);
+      });
+    }
+
+    nextButton.onclick = () => {
+      currentQuestion = (currentQuestion + 1) % questions.length;
+      loadQuestion(currentQuestion);
+    };
+
+    quiz.style.display = 'block';
+    loadQuestion(currentQuestion);
+  </script>
+</body>
+</html>
