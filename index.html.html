@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Business Analyst Portfolio</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f4f4f4;
+            color: #333;
+        }
+        header {
+            background: rgba(0, 0, 0, 0.5);
+            color: white;
+            padding: 20px;
+            text-align: center;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            position: relative;
+            z-index: 1;
+        }
+        nav {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            background-color: rgba(52, 73, 94, 0.8);
+            padding: 15px;
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+        nav a {
+            color: white;
+            text-decoration: none;
+            font-weight: bold;
+            transition: color 0.3s ease;
+        }
+        nav a:hover {
+            color: #1abc9c;
+        }
+        section {
+            padding: 40px 20px;
+            max-width: 1200px;
+            margin: 0 auto;
+            position: relative;
+            z-index: 1;
+        }
+        .projects {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+        }
+        .project-card {
+            border: 1px solid #ccc;
+            border-radius: 8px;
+            padding: 15px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+            text-align: center;
+            background-color: white;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        .project-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+        }
+        .project-card h3 {
+            color: #2c3e50;
+        }
+        footer {
+            background-color: #2c3e50;
+            color: white;
+            text-align: center;
+            padding: 20px;
+            position: relative;
+            margin-top: 40px;
+        }
+        footer p {
+            margin: 5px 0;
+        }
+        footer a {
+            color: #1abc9c;
+            text-decoration: none;
+        }
+        footer a:hover {
+            text-decoration: underline;
+        }
+        .contact-form {
+            max-width: 600px;
+            margin: 0 auto;
+            background-color: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        }
+        .contact-form input, .contact-form textarea {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 15px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+        .contact-form button {
+            background-color: #1abc9c;
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+        .contact-form button:hover {
+            background-color: #16a085;
+        }
+        #video-background {
+            position: fixed;
+            top: 0;
+            left: -2in; /* Adjusted to move left by 2 inches */
+            width: calc(100% + 3in); /* Increase width to cover additional left and right margins */
+            height: 100%;
+            object-fit: cover;
+            transform: scale(1.1); /* Slight zoom to fill screen */
+            z-index: -1;
+        }
+    </style>
+</head>
+<body>
+    <video autoplay loop muted playsinline id="video-background">
+        <source src="https://rawal-karim.github.io/web/6558145%20uhd%203840%202160%2025fps.mp4">
+    </video>
+    
+    <header>
+        <h1>Welcome to My Business Analyst Portfolio</h1>
+        <p>Your partner in data-driven decision-making and digital transformation.</p>
+    </header>
+
+    <nav>
+        <a href="#about">About</a>
+        <a href="#projects">Projects</a>
+        <a href="#contact">Contact</a>
+    </nav>
+
+    <section id="about">
+        <h2>About Me</h2>
+        <p>Imagine transforming complex data into actionable insights that drive success—this is where I thrive as a Business Analyst. With expertise in AI tools like Power BI, Tableau, and SQLite, I specialize in digitalizing businesses and crafting interactive solutions to empower smarter decisions. Explore my work below!</p>
+    </section>
+
+    <section id="projects">
+        <h2>Projects</h2>
+        <div class="projects">
+            <div class="project-card">
+                <h3>Solar System Simulation</h3>
+                <p>A 3D simulation of the solar system with interactive features and quizzes.</p>
+                <a href="https://rawal-karim.github.io/web/solar.html" target="_blank">View Project</a>
+            </div>
+            <div class="project-card">
+                <h3>ESG in the Energy Industry</h3>
+                <p>A detailed analysis for the impact of ESG issues on the Energy Industry.</p>
+                <a href="https://rawal-karim.github.io/web/Group%201_%20Energy%20sector%20(1).pdf" target="_blank">View Project</a>
+            </div>
+            <div class="project-card">
+                <h3>Spaceship Battle Game</h3>
+                <p>Developed a mobile-friendly Spaceship game with arrow controls and improved speed.</p>
+                <a href="https://rawal-karim.github.io/web/space.html" target="_blank">View Project</a>
+            </div>
+        </div>
+    </section>
+
+    <section id="contact">
+        <h2>Contact Me</h2>
+        <div class="contact-form">
+            <form action="#" method="post">
+                <label for="name">Name:</label>
+                <input type="text" id="name" name="name" required>
+
+                <label for="email">Email:</label>
+                <input type="email" id="email" name="email" required>
+
+                <label for="message">Message:</label>
+                <textarea id="message" name="message" rows="5" required></textarea>
+
+                <button type="submit">Send Message</button>
+            </form>
+            <p>Phone: +92 336-3933489</p>
+            <p>Email: <a href="mailto:rawalkarim.23@gmail.com">rawalkarim.23@gmail.com</a></p>
+        </div>
+    </section>
+
+    <footer>
+        <p>&copy; 2024 Rawal's Business Analyst Portfolio. All rights reserved.</p>
+        <p>Connect with me on <a href="https://www.linkedin.com/in/rawal23/" target="_blank">LinkedIn</a></p>
+    </footer>
+</body>
+</html>
