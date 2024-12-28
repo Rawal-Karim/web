@@ -87,22 +87,24 @@
         footer a:hover {
             text-decoration: underline;
         }
-        .contact-form {
-            max-width: 600px;
+        .vertical-form {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+            max-width: 500px;
             margin: 0 auto;
             background-color: white;
             padding: 20px;
             border-radius: 8px;
             box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
         }
-        .contact-form input, .contact-form textarea {
+        .vertical-form input, .vertical-form textarea {
             width: 100%;
             padding: 10px;
-            margin-bottom: 15px;
             border: 1px solid #57cc99;
             border-radius: 4px;
         }
-        .contact-form button {
+        .vertical-form button {
             background-color: #57cc99;
             color: white;
             border: none;
@@ -111,17 +113,17 @@
             cursor: pointer;
             transition: background-color 0.3s ease;
         }
-        .contact-form button:hover {
+        .vertical-form button:hover {
             background-color: #38a3a5;
         }
         #video-background {
             position: fixed;
             top: 0;
-            left: -2in; /* Adjusted to move left by 2 inches */
-            width: calc(100% + 3in); /* Increase width to cover additional left and right margins */
+            left: -2in;
+            width: calc(100% + 3in);
             height: 100%;
             object-fit: cover;
-            transform: scale(1.1); /* Slight zoom to fill screen */
+            transform: scale(1.1);
             z-index: -1;
         }
     </style>
@@ -130,7 +132,7 @@
     <video autoplay loop muted playsinline id="video-background">
         <source src="https://rawal-karim.github.io/web/6558145%20uhd%203840%202160%2025fps.mp4">
     </video>
-    
+
     <header>
         <h1>Welcome to My Business Analyst Portfolio</h1>
         <p>Your partner in data-driven decision-making and digital transformation.</p>
@@ -162,7 +164,7 @@
             </div>
             <div class="project-card">
                 <h3>Spaceship Battle Game</h3>
-                <p>Developed a desktop-friendly Spaceship game with arrow controls and improved speed.</p>
+                <p>Developed a mobile-friendly Spaceship game with arrow controls and improved speed.</p>
                 <a href="https://rawal-karim.github.io/web/space.html" target="_blank">View Project</a>
             </div>
         </div>
@@ -170,22 +172,18 @@
 
     <section id="contact">
         <h2>Contact Me</h2>
-        <div class="contact-form">
-            <form action="#" method="post">
-                <label for="name">Name:</label>
-                <input type="text" id="name" name="name" required>
+        <form class="vertical-form" action="https://submit-form.com/your-form-id">
+            <label for="first-name">First name</label>
+            <input id="first-name" name="first-name" type="text" required />
 
-                <label for="email">Email:</label>
-                <input type="email" id="email" name="email" required>
+            <label for="last-name">Last name</label>
+            <input id="last-name" name="last-name" type="text" required />
 
-                <label for="message">Message:</label>
-                <textarea id="message" name="message" rows="5" required></textarea>
+            <label for="message">Message</label>
+            <textarea id="message" name="message" cols="15" rows="5" required></textarea>
 
-                <button type="submit">Send Message</button>
-            </form>
-            <p>Phone: +92 336-3933489</p>
-            <p>Email: <a href="mailto:rawalkarim.23@gmail.com">rawalkarim.23@gmail.com</a></p>
-        </div>
+            <button type="submit">Submit</button>
+        </form>
     </section>
 
     <footer>
