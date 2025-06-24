@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Motivation Responsibility Spider Chart</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    body { font-family: Arial, sans-serif; padding: 20px; }
+    label { display: block; margin: 8px 0 2px; }
+    input[type="number"] { width: 50px; }
+    #chartContainer { max-width: 600px; margin: 30px auto; }
+  </style>
+</head>
+<body>
+
+  <h2>Who is Responsible for Motivation?</h2>
+  <p>Rate from 1 (Not responsible) to 5 (Highly responsible):</p>
+
+  <form id="motivationForm">
+    <label>Self (Personal Drive):
+      <input type="number" name="Self" min="1" max="5" required>
+    </label>
+
+    <label>Manager/Supervisor:
+      <input type="number" name="Manager" min="1" max="5" required>
+    </label>
+
+    <label>Team/Peers:
+      <input type="number" name="Team" min="1" max="5" required>
+    </label>
+
+    <label>Company Culture / Environment:
+      <input type="number" name="Culture" min="1" max="5" required>
+    </label>
+
+    <label>Leadership:
+      <input type="number" name="Leadership" min="1" max="5" required>
+    </label>
+
+    <label>Rewards & Recognition System:
+      <input type="number" name="Rewards" min="1" max="5" required>
+    </label>
+
+    <label>Work Design:
+      <input type="number" name="WorkDesign" min="1" max="5" required>
+    </label>
+
+    <br>
+    <button type="submit">Generate Spider Chart</button>
+  </form>
+
+  <div id="chartContainer">
+    <canvas id="spiderChart"></canvas>
+  </div>
+
+  <script>
+    const form = document.getElementById('motivationForm');
+    const ctx = document.getElementById('spiderChart').getContext('2d');
+    let radarChart;
+
+    form.addEventListener('submit', function(e) {
+      e.preventDefault();
+
+      const formData = new FormData(form);
+      const labels = [
+        'Self (Personal Drive)',
+        'Manager/Supervisor',
+        'Team/Peers',
+        'Company Culture / Environment',
+        'Leadership',
+        'Rewards & Recognition System',
+        'Work Design'
+      ];
+      const data = [
+        parseInt(formData.get('Self')),
+        parseInt(formData.get('Manager')),
+        parseInt(formData.get('Team')),
+        parseInt(formData.get('Culture')),
+        parseInt(formData.get('Leadership')),
+        parseInt(formData.get('Rewards')),
+        parseInt(formData.get('WorkDesign'))
+      ];
+
+      if (radarChart) radarChart.destroy();
+
+      radarChart = new Chart(ctx, {
+        type: 'radar',
+        data: {
+          labels: labels,
+          datasets: [{
+            label: 'Motivation Responsibility',
+            data: data,
+            fill: true,
+            backgroundColor: 'rgba(54, 162, 235, 0.2)',
+            borderColor: 'rgba(54, 162, 235, 1)',
+            pointBackgroundColor: 'rgba(54, 162, 235, 1)'
+          }]
+        },
+        options: {
+          scales: {
+            r: {
+              min: 1,
+              max: 5,
+              ticks: {
+                stepSize: 1
+              }
+            }
+          }
+        }
+      });
+    });
+  </script>
+
+</body>
+</html>
