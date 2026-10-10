@@ -549,18 +549,34 @@ function loadClip(k){if(clipCache[k])return clipCache[k];const a=ac();
   const p=new Promise((res,rej)=>{const bin=atob(VOICE_DATA[k]);const u=new Uint8Array(bin.length);for(let i=0;i<bin.length;i++)u[i]=bin.charCodeAt(i);a.decodeAudioData(u.buffer,res,rej)});
   clipCache[k]=p;p.catch(()=>{delete clipCache[k]});return p}
 function prefetchThai(list){if(lang!=="th"||!AC)return;list.forEach(x=>{const k=hkey(x);if(VOICE_TH.has(k))loadClip(k).catch(()=>{})})}
-function stopVoice(){sayToken++;try{htmlAudio&&htmlAudio.pause()}catch(e){}try{speechSynthesis.cancel()}catch(e){}if(curSrc){try{curSrc.onended=null;curSrc.stop()}catch(e){}curSrc=null}}
+function stopVoice(){sayToken++;try{voiceEl.onended=null;voiceEl.pause()}catch(e){}try{speechSynthesis.cancel()}catch(e){}if(curSrc){try{curSrc.onended=null;curSrc.stop()}catch(e){}curSrc=null}}
 function speakSynth(text,onend,tok){
   if(!("speechSynthesis" in window)){onend&&setTimeout(onend,text.length*55);return}
   try{const u=new SpeechSynthesisUtterance(speechText(text,lang));u.lang=lang==="th"?"th-TH":"en-US";const v=pickVoice(u.lang);if(v)u.voice=v;u.rate=lang==="th"?.98:1.03;u.pitch=1.05;if(onend){u.onend=()=>{if(tok===sayToken)onend()};u.onerror=u.onend}speechSynthesis.speak(u)}catch(e){onend&&onend()}
 }
+// One persistent <audio> element: unlocked on the first tap, then reused. Unlike Web Audio,
+// it keeps playing when an iPhone's ring/silent switch is set to silent.
+const SILENT="data:audio/mpeg;base64,SUQzBAAAAAAAI1RTU0UAAAAPAAADTGF2ZjYwLjE2LjEwMAAAAAAAAAAAAAAA//OEwAAAAAAAAAAAAEluZm8AAAAPAAAACQAABCAARUVFRUVFRUVFRUVdXV1dXV1dXV1dXXR0dHR0dHR0dHR0i4uLi4uLi4uLi4uioqKioqKioqKiorq6urq6urq6urq60dHR0dHR0dHR0dHo6Ojo6Ojo6Ojo6P//////////////AAAAAExhdmM2MC4zMQAAAAAAAAAAAAAAACQD8AAAAAAAAAQgDeb0IwAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA//NExAAAAANIAAAAAExBTUUzLjEwMFVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVTEFNRTMu//NExFMAAANIAAAAADEwMFVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVTEFNRTMu//NExKYAAANIAAAAADEwMFVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVTEFNRTMu//NExKwAAANIAAAAADEwMFVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVTEFNRTMu//NExKwAAANIAAAAADEwMFVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVTEFNRTMu//NExKwAAANIAAAAADEwMFVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVTEFNRTMu//NExKwAAANIAAAAADEwMFVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV//NExKwAAANIAAAAAFVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV//NExKwAAANIAAAAAFVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV";
+const voiceEl=new Audio();voiceEl.preload="auto";voiceEl.setAttribute("playsinline","");
+let audioUnlocked=false;
+function unlockAudio(){
+  try{if(navigator.audioSession)navigator.audioSession.type="playback"}catch(e){}
+  ac();
+  if(audioUnlocked)return;audioUnlocked=true;
+  try{voiceEl.src=SILENT;const p=voiceEl.play();if(p&&p.catch)p.catch(()=>{audioUnlocked=false})}catch(e){audioUnlocked=false}
+}
+["pointerdown","touchend","click","keydown"].forEach(ev=>document.addEventListener(ev,unlockAudio,{capture:true,passive:true}));
 function say(text,onend){
   if(!voiceOn){onend&&setTimeout(onend,text.length*55);return}
   stopVoice();const tok=sayToken;
-  if(lang==="th"){const k=hkey(text);const a=ac();
-    if(VOICE_TH.has(k)&&!a){try{htmlAudio&&htmlAudio.pause();htmlAudio=new Audio("data:audio/mpeg;base64,"+VOICE_DATA[k]);htmlAudio.onended=()=>{if(tok===sayToken&&onend)onend()};htmlAudio.play().catch(()=>{})}catch(e){}return}
-    if(!VOICE_TH.has(k)&&!pickVoice("th-TH")){onend&&setTimeout(onend,text.length*55);return}
-    if(VOICE_TH.has(k)&&a){loadClip(k).then(buf=>{if(tok!==sayToken)return;const src=a.createBufferSource();src.buffer=buf;const g=a.createGain();g.gain.value=1;src.connect(g).connect(a.destination);src.onended=()=>{if(curSrc===src)curSrc=null;if(tok===sayToken&&onend)onend()};curSrc=src;src.start()}).catch(()=>{if(tok===sayToken&&onend)onend()});return}}
+  if(lang==="th"){const k=hkey(text);
+    if(VOICE_TH.has(k)){
+      try{voiceEl.onended=()=>{if(tok===sayToken&&onend)onend()};voiceEl.onerror=voiceEl.onended;
+        voiceEl.src="data:audio/mpeg;base64,"+VOICE_DATA[k];voiceEl.currentTime=0;
+        const p=voiceEl.play();if(p&&p.catch)p.catch(()=>{if(tok===sayToken&&onend)setTimeout(onend,text.length*55)})}catch(e){onend&&onend()}
+      return}
+    if(!pickVoice("th-TH")){onend&&setTimeout(onend,text.length*55);return}
+  }
   speakSynth(text,onend,tok);
 }
 const VOICE_ON=["เปิดเสียงแล้ว ยินดีต้อนรับสู่บาร์","Voice on. Welcome to the bar."];
