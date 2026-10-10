@@ -339,10 +339,10 @@ const PHOTOS={"IMK": "data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAY
 /* ---------------- data ---------------- */
 const ING = {
   espresso:{th:"เอสเพรสโซ",en:"Espresso",unit:"shot",opts:["1","2"],color:"#3b1d0e",w:2.4,icon:"shot",g:"coffee"},
-  milk:{th:"นมสด",en:"Fresh milk",unit:"oz",opts:["3","3.5","5","8"],color:"#f3ede1",w:1,icon:"carton",g:"coffee"},
+  milk:{th:"นมสด",en:"Fresh milk",unit:"oz",opts:["3","3.5","5","8"],color:"#efe7d8",w:1,icon:"carton",g:"coffee"},
   mbs:{th:"MBS",en:"MBS",unit:"pump",opts:["2","3","5"],color:"#ecdcb8",w:.5,icon:"pump",g:"coffee"},
-  hotWater:{th:"น้ำร้อน",en:"Hot water",unit:"oz",opts:["1","2","3"],color:"#c9d4d8",w:.15,icon:"kettle",g:"coffee"},
-  filteredWater:{th:"น้ำกรอง (อุณหภูมิห้อง)",en:"Filtered water (room temp)",unit:"oz",opts:["1","2","2.5"],color:"#d4e2e8",w:.12,icon:"pitcher",g:"coffee"},
+  hotWater:{th:"น้ำร้อน",en:"Hot water",unit:"oz",opts:["1","2","3"],color:"#f4f8fa",w:.15,icon:"kettle",g:"coffee"},
+  filteredWater:{th:"น้ำกรอง (อุณหภูมิห้อง)",en:"Filtered water (room temp)",unit:"oz",opts:["1","2","2.5"],color:"#f5f9fb",w:.12,icon:"pitcher",g:"coffee"},
   whiteSyrup:{th:"น้ำเชื่อมทรายขาว",en:"White sugar syrup",unit:"pump",opts:["1","2","3","8","9"],color:"#f2eadb",w:.08,icon:"pump",g:"syrup"},
   brownSyrup:{th:"น้ำเชื่อมทรายแดง",en:"Brown sugar syrup",unit:"pump",opts:["1","2","3"],color:"#7d4316",w:.5,icon:"pump",g:"syrup"},
   caramel:{th:"น้ำเชื่อมคาราเมล",en:"Caramel syrup",unit:"pump",opts:["1","2","3"],color:"#b8681f",w:.5,icon:"pump",g:"syrup"},
@@ -459,7 +459,7 @@ const RECIPES=[
    S("main",["mapeed:6","whiteSyrup:3"],"ตวงน้ำมะปี๊ดผสมน้ำผึ้ง 6 oz และปั๊มน้ำเชื่อมทรายขาว 3 ปั๊ม ใส่ลงในแก้ว 16 oz","Measure 6 oz of calamansi honey mix and pump 3 pumps of white sugar syrup into the 16 oz cup."),
    stir(),iceFull("ตักน้ำแข็งให้เต็มแก้ว","Fill the cup with ice."),espTop(),lid()]},
 ];
-const TEA_COLORS={premiumTea:"#4e2410",thaiTea:"#93351a"};
+const TEA_COLORS={premiumTea:"#9a6a44",thaiTea:"#c95d1c"};
 
 /* ---------------- i18n ---------------- */
 const T={
@@ -609,31 +609,33 @@ function hexToRgb(h){h=h.replace("#","");return[parseInt(h.slice(0,2),16),parseI
 const rgbToHex=c=>"#"+c.map(v=>Math.round(Math.max(0,Math.min(255,v))).toString(16).padStart(2,"0")).join("");
 const mixColors=(a,b,p)=>{const A=hexToRgb(a),B=hexToRgb(b);return rgbToHex(A.map((v,i)=>v+(B[i]-v)*p))};
 const shade=(h,f)=>rgbToHex(hexToRgb(h).map(v=>f<0?v*(1+f):v+(255-v)*f));
-function blend(layers){let W=0,acc=[0,0,0],oz=0;layers.forEach(l=>{const w=Math.max(.02,l.w);W+=w;const c=hexToRgb(l.color);acc=acc.map((v,i)=>v+c[i]*w);oz+=l.oz});return{color:rgbToHex(acc.map(v=>v/W)),oz,w:W}}
+// Colour mixing by light absorption (Beer-Lambert), not paint averaging: each ingredient adds
+// absorbance in proportion to its volume and tint strength, so 1 oz of espresso browns 5 oz of milk.
+const TINT={espresso:1.6,teaExtract:4.5,cocoa:9,orangeConc:2,honey:4,greenTea:1.3,brownSyrup:1.2,caramel:1.2,hazelnut:1.2};
+const absorb=hex=>hexToRgb(hex).map(v=>-Math.log(Math.max(v,6)/255));
+function blend(layers){let oz=0,a=[0,0,0];layers.forEach(l=>{oz+=l.oz;const la=l.a||absorb(l.color).map(x=>x*l.oz*(l.k||1));a=a.map((v,i)=>v+la[i])});const d=Math.max(oz,.05);return{color:rgbToHex(a.map(v=>255*Math.exp(-v/d))),oz,a}}
 
 function newState(){return{main:{layers:[],ice:null,iceT:0,lid:false,lidT:0,garnish:[],stirT:-1e9,jelly:null},side:{type:null,layers:[],leaves:false,stirT:-1e9},pourT:-1e9,pourColor:"#000"}}
 
 let animUntil=0,needsDraw=true;
 function applyNeed(st,vessel,need,anim){
   const T0=anim?now():-1e9;if(anim)animUntil=now()+2600;
-  if(need==="stir"){const v=vessel==="main"?st.main:st.side;const keep=v.layers.filter(l=>l.jelly),liq=v.layers.filter(l=>!l.jelly);if(liq.length>1||(liq.length&&liq[0].float)){const b=blend(liq);v.layers=[...keep,{color:b.color,from:liq[liq.length-1].color,oz:b.oz,w:b.w,t:-1e9,ct:T0}]}v.stirT=T0;return}
+  if(need==="stir"){const v=vessel==="main"?st.main:st.side;const keep=v.layers.filter(l=>l.jelly),liq=v.layers.filter(l=>!l.jelly);if(liq.length>1||(liq.length&&liq[0].float)){const b=blend(liq);v.layers=[...keep,{color:b.color,from:liq[liq.length-1].color,oz:b.oz,a:b.a,t:-1e9,ct:T0}]}v.stirT=T0;return}
   if(need==="iceHalf"){st.main.ice="half";st.main.iceT=T0;return}
   if(need==="iceFull"){st.main.ice="full";st.main.iceT=T0;return}
   if(need==="lid"){st.main.lid=true;st.main.lidT=T0;return}
   if(need==="strain"){st.side.leaves=false;st.side.stirT=T0;return}
-  if(need==="pour"){if(!st.side.layers.length)return;const b=blend(st.side.layers);st.main.layers.push({color:b.color,oz:b.oz,w:b.w,t:T0,float:st.main.ice==="full"});st.pourT=T0;st.pourColor=b.color;st.side={type:null,layers:[],leaves:false,stirT:-1e9};return}
+  if(need==="pour"){if(!st.side.layers.length)return;const b=blend(st.side.layers);if(st.side.layers.length===1)b.color=st.side.layers[0].color;st.main.layers.push({color:b.color,oz:b.oz,a:b.a,t:T0,float:st.main.ice==="full"});st.pourT=T0;st.pourColor=b.color;st.side={type:null,layers:[],leaves:false,stirT:-1e9};return}
   const [id,k]=need.split(":");const ing=ING[id];
   if(id==="lemonSlice"){st.main.garnish.push({t:T0});return}
-  let color=ing.color,w=ing.w*Math.max(.3,volOf(id,k)),oz=volOf(id,k);
-  if(id==="cocoa"){w=2;}
-  if(id==="lemonPowder"){w=.15}
+  let color=ing.color,oz=volOf(id,k);const w=TINT[id]||1;
   if(vessel==="main"){
-    if(id==="orangeJelly"){st.main.jelly={t:T0};st.main.layers.push({color:"#f2a31a",oz,w:2,t:T0,jelly:true});return}
-    st.main.layers.push({color,oz,w,t:T0,float:st.main.ice==="full"});st.pourT=T0;st.pourColor=color;return}
+    if(id==="orangeJelly"){st.main.jelly={t:T0};st.main.layers.push({color:"#f2a31a",oz,k:1,t:T0,jelly:true});return}
+    st.main.layers.push({color,oz,k:w,t:T0,float:st.main.ice==="full"});st.pourT=T0;st.pourColor=color;return}
   if(st.side.type!==vessel){st.side={type:vessel,layers:[],leaves:false,stirT:-1e9}}
   if(id==="thaiTea"||id==="premiumTea"){st.side.leaves=true;st.side.teaColor=TEA_COLORS[id];return}
   if(id==="teaExtract"){color=st.side.teaColor||ing.color}
-  st.side.layers.push({color,oz,w,t:T0});st.side.pourT=T0;st.side.pourColor=color;
+  st.side.layers.push({color,oz,k:w,t:T0});st.side.pourT=T0;st.side.pourColor=color;
 }
 
 /* deterministic ice cube layout for the 16 oz cup */
@@ -655,14 +657,14 @@ function cupSVG(st,id,tNow){
   let scale=factor;const maxOz=15.3;if(total*scale>maxOz)scale=maxOz/total;
   let y=bot+3,liquid="",gi=0;
   m.layers.forEach((l,i)=>{
-    const h=l.oz*shown[i]*scale/16*H;if(h<=.2)return;
+    const h=l.oz*(l.float&&i>0?1.7:1)*shown[i]*scale/16*H;if(h<=.2)return;
     let col=l.color;if(l.from&&l.ct){const p=Math.min(1,Math.max(0,(tNow-l.ct)/800));col=mixColors(l.from,l.color,p)}
     const y0=y-h;gi++;
     defs+=`<linearGradient id="${id}L${gi}" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stop-color="${shade(col,.06)}"/><stop offset=".55" stop-color="${col}"/><stop offset="1" stop-color="${shade(col,-.12)}"/></linearGradient>`;
     if(l.float&&i>0){
-      defs+=`<linearGradient id="${id}F${gi}" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stop-color="${col}" stop-opacity=".9"/><stop offset="1" stop-color="${col}" stop-opacity="0"/></linearGradient>`;
-      liquid+=`<rect x="0" y="${y0}" width="240" height="${h+22}" fill="url(#${id}F${gi})"/>`;
-      liquid+=`<rect x="0" y="${y0}" width="240" height="${h*.75}" fill="url(#${id}L${gi})" opacity=".92"/>`;
+      defs+=`<linearGradient id="${id}F${gi}" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stop-color="${col}" stop-opacity="1"/><stop offset=".6" stop-color="${col}" stop-opacity=".85"/><stop offset="1" stop-color="${col}" stop-opacity="0"/></linearGradient>`;
+      liquid+=`<rect x="0" y="${y0}" width="240" height="${h+26}" fill="url(#${id}F${gi})"/>`;
+      liquid+=`<rect x="0" y="${y0}" width="240" height="${h*.8}" fill="url(#${id}L${gi})"/>`;
     }else liquid+=`<rect x="0" y="${y0}" width="240" height="${h+1}" fill="url(#${id}L${gi})"/>`;
     if(l.jelly){for(let j=0;j<12;j++){const jx=70+((j*37)%100),jy=y0+6+((j*13)%Math.max(4,h-10));liquid+=`<rect x="${jx}" y="${jy}" width="13" height="10" rx="3" fill="#ffb53a" opacity=".85" stroke="#ffd27a" stroke-width=".8"/>`}}
     y=y0;
@@ -674,7 +676,7 @@ function cupSVG(st,id,tNow){
   if(pp>=0&&pp<1){const w=pp<.85?7:7*(1-(pp-.85)/.15);liquid+=`<rect x="${120-w/2}" y="-40" width="${w}" height="${surf+40}" rx="3" fill="${st.pourColor}" opacity=".9"/><rect x="${120-w/2+1.5}" y="-40" width="1.5" height="${surf+40}" fill="#fff" opacity=".35"/>`}
   // ice
   let ice="";
-  if(m.ice){const limit=m.ice==="full"?top+4:bot-H*.48;ICE.forEach((c,i)=>{if(c.y-c.s<limit-6)return;const drop=(1-easeOut(iceP))*(160+i*6);const op=Math.min(1,iceP*2);ice+=`<g transform="translate(${c.x+c.s/2},${c.y-c.s/2-drop}) rotate(${c.rot})" opacity="${op}"><rect x="${-c.s/2}" y="${-c.s/2}" width="${c.s}" height="${c.s}" rx="7" fill="#fff" fill-opacity=".16" stroke="#fff" stroke-opacity=".42" stroke-width="1.1"/><rect x="${-c.s/2+4}" y="${-c.s/2+4}" width="${c.s*.35}" height="${c.s*.18}" rx="3" fill="#fff" opacity=".45"/><path d="M${-c.s/2+5},${c.s/2-6} L${c.s/2-6},${-c.s/2+6}" stroke="#fff" stroke-opacity=".12" stroke-width="3"/></g>`})}
+  if(m.ice){const limit=m.ice==="full"?top+4:bot-H*.48;ICE.forEach((c,i)=>{if(c.y-c.s<limit-6)return;const drop=(1-easeOut(iceP))*(160+i*6);const op=Math.min(1,iceP*2);ice+=`<g transform="translate(${c.x+c.s/2},${c.y-c.s/2-drop}) rotate(${c.rot})" opacity="${op}"><rect x="${-c.s/2}" y="${-c.s/2}" width="${c.s}" height="${c.s}" rx="7" fill="#fff" fill-opacity=".07" stroke="#fff" stroke-opacity=".32" stroke-width="1.1"/><rect x="${-c.s/2+4}" y="${-c.s/2+4}" width="${c.s*.3}" height="${c.s*.14}" rx="3" fill="#fff" opacity=".35"/><path d="M${-c.s/2+5},${c.s/2-6} L${c.s/2-6},${-c.s/2+6}" stroke="#fff" stroke-opacity=".12" stroke-width="3"/></g>`})}
   // spoon
   let spoon="";const sp=(tNow-Math.max(m.stirT,-1e8))/900;
   if(sp>=0&&sp<1){const a=Math.sin(sp*Math.PI*4)*12;spoon=`<g transform="rotate(${a} 120 ${bot-20})"><rect x="117" y="-30" width="6" height="${bot-10}" rx="3" fill="#cfd3d6"/><rect x="118" y="-30" width="1.5" height="${bot-10}" fill="#fff" opacity=".7"/><ellipse cx="120" cy="${bot-16}" rx="9" ry="12" fill="#bfc4c8"/></g>`}
