@@ -142,6 +142,7 @@ header.top{display:flex;align-items:center;gap:14px;flex-wrap:wrap;padding-block
   radial-gradient(500px 300px at 50% 35%,rgba(140,80,40,.35),transparent 70%),
   linear-gradient(180deg,#1d120c,#2a1a11 62%,#120b07);filter:blur(1.5px)}
 .scene .shelfline{position:absolute;left:0;right:0;top:26%;height:10px;background:linear-gradient(180deg,rgba(255,255,255,.06),rgba(0,0,0,.4));opacity:.6}
+.scene .backlight{position:absolute;left:50%;top:2%;width:min(86%,460px);height:84%;transform:translateX(-50%);border-radius:50%;background:radial-gradient(ellipse closest-side,rgba(255,244,226,.97),rgba(255,230,196,.85) 38%,rgba(246,200,148,.45) 68%,rgba(240,190,130,0) 100%);filter:blur(4px)}
 .scene .counter{position:absolute;left:0;right:0;bottom:0;height:28%;
   background:
    linear-gradient(180deg,rgba(255,230,190,.22),rgba(255,230,190,0) 14%),
@@ -648,40 +649,52 @@ function cupSVG(st,id,tNow){
   const m=st.main;
   const iceP=m.ice?Math.min(1,(tNow-m.iceT)/700):0;
   const factor=m.ice==="full"?1+.7*iceP:m.ice==="half"?1+.28*iceP:1;
-  let defs=`<linearGradient id="${id}g" x1="0" x2="1"><stop offset="0" stop-color="#fff" stop-opacity=".26"/><stop offset=".18" stop-color="#fff" stop-opacity=".06"/><stop offset=".7" stop-color="#fff" stop-opacity=".03"/><stop offset=".92" stop-color="#fff" stop-opacity=".16"/><stop offset="1" stop-color="#fff" stop-opacity=".05"/></linearGradient>
+  let defs=`<linearGradient id="${id}g" x1="0" x2="1"><stop offset="0" stop-color="#fff" stop-opacity=".26"/><stop offset=".18" stop-color="#fff" stop-opacity=".025"/><stop offset=".7" stop-color="#fff" stop-opacity=".01"/><stop offset=".92" stop-color="#fff" stop-opacity=".16"/><stop offset="1" stop-color="#fff" stop-opacity=".05"/></linearGradient>
    <clipPath id="${id}c"><path d="M36,${top} L204,${top} L177,${bot} Q120,${bot+5} 63,${bot} Z"/></clipPath>
    <filter id="${id}b"><feGaussianBlur stdDeviation="2.2"/></filter><filter id="${id}b2"><feGaussianBlur stdDeviation="5"/></filter>
-   <linearGradient id="${id}sh" x1="0" x2="1"><stop offset="0" stop-color="#000" stop-opacity=".28"/><stop offset=".25" stop-color="#000" stop-opacity="0"/><stop offset=".78" stop-color="#000" stop-opacity="0"/><stop offset="1" stop-color="#000" stop-opacity=".32"/></linearGradient>`;
+   <linearGradient id="${id}sh" x1="0" x2="1"><stop offset="0" stop-color="#000" stop-opacity=".42"/><stop offset=".14" stop-color="#000" stop-opacity=".1"/><stop offset=".36" stop-color="#fff" stop-opacity="0"/><stop offset=".5" stop-color="#fff" stop-opacity=".035"/><stop offset=".66" stop-color="#fff" stop-opacity="0"/><stop offset=".86" stop-color="#000" stop-opacity=".12"/><stop offset="1" stop-color="#000" stop-opacity=".46"/></linearGradient>
+   <filter id="${id}soft" x="-5%" y="-5%" width="110%" height="110%"><feTurbulence type="fractalNoise" baseFrequency="0.02 0.06" numOctaves="2" seed="3"/><feDisplacementMap in="SourceGraphic" scale="9" xChannelSelector="R" yChannelSelector="G"/><feGaussianBlur stdDeviation="0.7"/></filter>
+   <filter id="${id}swirl" x="-10%" y="-10%" width="120%" height="130%"><feTurbulence type="fractalNoise" baseFrequency="0.018 0.05" numOctaves="3" seed="7"/><feDisplacementMap in="SourceGraphic" scale="30" xChannelSelector="R" yChannelSelector="G"/><feGaussianBlur stdDeviation="1.1"/></filter>
+   <radialGradient id="${id}iw" cx="50%" cy="50%" r="60%"><stop offset="0" stop-color="#fff" stop-opacity="0"/><stop offset=".8" stop-color="#fff" stop-opacity=".02"/><stop offset="1" stop-color="#fff" stop-opacity=".12"/></radialGradient>
+   <radialGradient id="${id}ia" cx="45%" cy="40%" r="65%"><stop offset="0" stop-color="#fff" stop-opacity=".16"/><stop offset=".7" stop-color="#eaf4fa" stop-opacity=".22"/><stop offset="1" stop-color="#fff" stop-opacity=".5"/></radialGradient>`;
   // liquid
-  let total=0;const shown=m.layers.map(l=>{const p=Math.min(1,Math.max(0,(tNow-l.t)/750));total+=l.oz*p;return p});
+  const isDark=c=>hexToRgb(c).reduce((a,v)=>a+v,0)<330;
+  const vis=m.layers.map((l,i)=>l.oz*(l.float&&i>0&&isDark(l.color)?1.7:1));
+  let total=0;const shown=m.layers.map((l,i)=>{const p=Math.min(1,Math.max(0,(tNow-l.t)/750));total+=vis[i]*p;return p});
   let scale=factor;const maxOz=15.3;if(total*scale>maxOz)scale=maxOz/total;
-  let y=bot+3,liquid="",gi=0;
+  let y=bot+3,base="",floats="",extras="",gi=0,topCol=null;
   m.layers.forEach((l,i)=>{
-    const h=l.oz*(l.float&&i>0?1.7:1)*shown[i]*scale/16*H;if(h<=.2)return;
+    const fl=l.float&&i>0;
+    const h=vis[i]*shown[i]*scale/16*H;if(h<=.2)return;
     let col=l.color;if(l.from&&l.ct){const p=Math.min(1,Math.max(0,(tNow-l.ct)/800));col=mixColors(l.from,l.color,p)}
-    const y0=y-h;gi++;
-    defs+=`<linearGradient id="${id}L${gi}" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stop-color="${shade(col,.06)}"/><stop offset=".55" stop-color="${col}"/><stop offset="1" stop-color="${shade(col,-.12)}"/></linearGradient>`;
-    if(l.float&&i>0){
-      defs+=`<linearGradient id="${id}F${gi}" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stop-color="${col}" stop-opacity="1"/><stop offset=".6" stop-color="${col}" stop-opacity=".85"/><stop offset="1" stop-color="${col}" stop-opacity="0"/></linearGradient>`;
-      liquid+=`<rect x="0" y="${y0}" width="240" height="${h+26}" fill="url(#${id}F${gi})"/>`;
-      liquid+=`<rect x="0" y="${y0}" width="240" height="${h*.8}" fill="url(#${id}L${gi})"/>`;
-    }else liquid+=`<rect x="0" y="${y0}" width="240" height="${h+1}" fill="url(#${id}L${gi})"/>`;
-    if(l.jelly){for(let j=0;j<12;j++){const jx=70+((j*37)%100),jy=y0+6+((j*13)%Math.max(4,h-10));liquid+=`<rect x="${jx}" y="${jy}" width="13" height="10" rx="3" fill="#ffb53a" opacity=".85" stroke="#ffd27a" stroke-width=".8"/>`}}
+    const y0=y-h;gi++;topCol=col;
+    defs+=`<linearGradient id="${id}L${gi}" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stop-color="${shade(col,.07)}"/><stop offset=".5" stop-color="${col}"/><stop offset="1" stop-color="${shade(col,-.14)}"/></linearGradient>`;
+    if(fl){
+      const dark=isDark(col);
+      defs+=`<linearGradient id="${id}F${gi}" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stop-color="${col}" stop-opacity=".95"/><stop offset="1" stop-color="${col}" stop-opacity="0"/></linearGradient>`;
+      let g=`<rect x="0" y="${y0}" width="240" height="${h*.72}" fill="url(#${id}L${gi})"/><rect x="0" y="${y0+h*.6}" width="240" height="${h*.5}" fill="url(#${id}F${gi})"/>`;
+      // tendrils trickling down through the layer below
+      for(let k=0;k<9;k++){const tx=30+k*22+((k*37+gi*11)%13),tw=8+((k*29)%16),th=h*(.35+((k*53)%10)/14);g+=`<rect x="${tx}" y="${y0+h*.55}" width="${tw}" height="${th}" rx="${tw/2}" fill="url(#${id}F${gi})"/>`}
+      floats+=`<g filter="url(#${id}swirl)">${g}</g>`;
+      if(dark&&i===m.layers.length-1)extras+=`<rect x="0" y="${y0-1}" width="240" height="4" fill="#b98250" opacity=".85" filter="url(#${id}b)"/>`;
+    }else base+=`<rect x="0" y="${y0}" width="240" height="${h+(i?6:1)}" fill="url(#${id}L${gi})"/>`;
+    if(l.jelly){for(let j=0;j<14;j++){const jx=66+((j*37)%104),jy=y0+5+((j*13)%Math.max(4,h-10));extras+=`<rect x="${jx}" y="${jy}" width="14" height="11" rx="4" fill="#ffb53a" fill-opacity=".8" stroke="#ffe0a0" stroke-opacity=".8" stroke-width=".8"/><rect x="${jx+3}" y="${jy+2}" width="5" height="2.5" rx="1" fill="#fff" opacity=".6"/>`}}
     y=y0;
   });
+  let liquid=`<g filter="url(#${id}soft)">${base}</g>${floats}${extras}`;
   const surf=y;
-  if(total>0.05){liquid+=`<rect x="0" y="${surf-1.5}" width="240" height="3" fill="#fff" opacity=".18"/>`}
+  if(total>0.05&&topCol){const sw=(xr(Math.max(top,surf))-xl(Math.max(top,surf)))/2;liquid+=`<ellipse cx="120" cy="${surf+1}" rx="${sw}" ry="4.5" fill="${shade(topCol,.18)}" opacity=".55"/><rect x="0" y="${surf-1}" width="240" height="1.6" fill="#fff" opacity=".25"/>`}
   // pour stream
   const pp=(tNow-st.pourT)/750;
   if(pp>=0&&pp<1){const w=pp<.85?7:7*(1-(pp-.85)/.15);liquid+=`<rect x="${120-w/2}" y="-40" width="${w}" height="${surf+40}" rx="3" fill="${st.pourColor}" opacity=".9"/><rect x="${120-w/2+1.5}" y="-40" width="1.5" height="${surf+40}" fill="#fff" opacity=".35"/>`}
   // ice
   let ice="";
-  if(m.ice){const limit=m.ice==="full"?top+4:bot-H*.48;ICE.forEach((c,i)=>{if(c.y-c.s<limit-6)return;const drop=(1-easeOut(iceP))*(160+i*6);const op=Math.min(1,iceP*2);ice+=`<g transform="translate(${c.x+c.s/2},${c.y-c.s/2-drop}) rotate(${c.rot})" opacity="${op}"><rect x="${-c.s/2}" y="${-c.s/2}" width="${c.s}" height="${c.s}" rx="7" fill="#fff" fill-opacity=".07" stroke="#fff" stroke-opacity=".32" stroke-width="1.1"/><rect x="${-c.s/2+4}" y="${-c.s/2+4}" width="${c.s*.3}" height="${c.s*.14}" rx="3" fill="#fff" opacity=".35"/><path d="M${-c.s/2+5},${c.s/2-6} L${c.s/2-6},${-c.s/2+6}" stroke="#fff" stroke-opacity=".12" stroke-width="3"/></g>`})}
+  if(m.ice){const limit=m.ice==="full"?top+4:bot-H*.48;ICE.forEach((c,i)=>{if(c.y-c.s<limit-6)return;const drop=(1-easeOut(iceP))*(160+i*6);const op=Math.min(1,iceP*2);const air=(c.y-c.s/2-drop)<surf;ice+=`<g transform="translate(${c.x+c.s/2},${c.y-c.s/2-drop}) rotate(${c.rot})" opacity="${op}"><rect x="${-c.s/2}" y="${-c.s/2}" width="${c.s}" height="${c.s}" rx="8" fill="url(#${id}${air?"ia":"iw"})" stroke="#fff" stroke-opacity="${air?.55:.16}" stroke-width="1"/><path d="M${-c.s/2+4},${-c.s/2+9} Q${-c.s/2+4},${-c.s/2+4} ${-c.s/2+10},${-c.s/2+4} L${c.s*.15},${-c.s/2+4}" stroke="#fff" stroke-opacity="${air?.8:.3}" stroke-width="2" fill="none" stroke-linecap="round"/><path d="M${-c.s/2+6},${c.s/2-7} L${c.s/2-8},${-c.s/2+8}" stroke="#fff" stroke-opacity="${air?.18:.05}" stroke-width="4"/></g>`})}
   // spoon
   let spoon="";const sp=(tNow-Math.max(m.stirT,-1e8))/900;
   if(sp>=0&&sp<1){const a=Math.sin(sp*Math.PI*4)*12;spoon=`<g transform="rotate(${a} 120 ${bot-20})"><rect x="117" y="-30" width="6" height="${bot-10}" rx="3" fill="#cfd3d6"/><rect x="118" y="-30" width="1.5" height="${bot-10}" fill="#fff" opacity=".7"/><ellipse cx="120" cy="${bot-16}" rx="9" ry="12" fill="#bfc4c8"/></g>`}
   // drops
-  let drops="";if(m.ice){const dp=Math.min(1,Math.max(0,(tNow-m.iceT-500)/1500));DROPS.forEach(d=>{const yy=top+d.y*H;const x=xl(yy)+4+d.x*(xr(yy)-xl(yy)-8);drops+=`<ellipse cx="${x}" cy="${yy}" rx="${d.r*.8}" ry="${d.r}" fill="#fff" opacity="${.32*dp}"/><circle cx="${x-d.r*.25}" cy="${yy-d.r*.35}" r="${d.r*.3}" fill="#fff" opacity="${.6*dp}"/>`})}
+  let drops="";if(m.ice){const dp=Math.min(1,Math.max(0,(tNow-m.iceT-500)/1500));DROPS.forEach(d=>{const yy=top+d.y*H;const x=xl(yy)+4+d.x*(xr(yy)-xl(yy)-8);drops+=`<ellipse cx="${x}" cy="${yy}" rx="${d.r*.8}" ry="${d.r}" fill="#fff" opacity="${.28*dp}"/><circle cx="${x-d.r*.25}" cy="${yy-d.r*.35}" r="${d.r*.3}" fill="#fff" opacity="${.7*dp}"/>`+(d.r>2.6?`<path d="M${x},${yy-d.r} L${x},${yy-d.r-18-d.x*30}" stroke="#fff" stroke-opacity="${.14*dp}" stroke-width="${d.r*.7}" stroke-linecap="round"/>`:"")});drops=`<rect x="0" y="0" width="240" height="360" fill="#fff" opacity="${.022*dp}" clip-path="url(#${id}c)"/>`+drops}
   // garnish
   let garn="";m.garnish.forEach((g,i)=>{const p=easeOut(Math.min(1,Math.max(0,(tNow-g.t)/600)));const gy=Math.max(top+20,surf)-8-(1-p)*120;garn+=`<g transform="translate(${150-i*30},${gy}) rotate(-18) scale(1,.55)" opacity="${p}"><circle r="22" fill="#d8e86c" stroke="#9fbf2c" stroke-width="3"/><circle r="17" fill="#eef5a8"/>${[0,1,2,3,4,5,6,7].map(k=>`<path d="M0,0 L${17*Math.cos(k*Math.PI/4)},${17*Math.sin(k*Math.PI/4)}" stroke="#d8e86c" stroke-width="2"/>`).join("")}</g>`});
   // lid
@@ -776,7 +789,7 @@ function home(){
       <div class="cta"><button class="btn primary" id="rand"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16v12H8l-4 4z"/></svg>${t("randomOrder")}</button></div>
       <div class="legend"><span><b>+100</b>${t("l1")}</span><span><b>×3</b>${t("combo")}</span><span><b>★★★</b>${lang==="th"?"ชงถูกทั้งหมด ไม่ใช้คำใบ้":"no mistakes, no hints"}</span></div>
     </div>
-    <div class="heroScene scene"><div class="wall"></div><div class="shelfline"></div><div class="counter"></div><div class="reflect"></div><div class="cupWrap" style="width:min(220px,52%)">${cupSVG(demo,"hero",1e12)}</div></div>
+    <div class="heroScene scene"><div class="wall"></div><div class="shelfline"></div><div class="backlight"></div><div class="counter"></div><div class="reflect"></div><div class="cupWrap" style="width:min(220px,52%)">${cupSVG(demo,"hero",1e12)}</div></div>
   </section>
   <div class="sectionHead"><h2>${t("menu")}</h2><span>${t("menuSub")}</span></div>
   <div class="menu">${RECIPES.map(r=>`<article class="card">
@@ -811,7 +824,7 @@ function renderStation(){
        <div class="meta"><span>16 OZ · ICED</span><span>${R.steps.length} ${lang==="th"?"ขั้นตอน":"steps"}</span></div></div>
      <div class="modeTabs"><button id="mLearn" aria-pressed="${learning}">${t("learn")}</button><button id="mPrac" aria-pressed="${!learning}">${t("practice")}</button></div>
     </div><div id="leftDyn"></div></aside>
-   <section class="scene" id="scene"><div class="wall"></div><div class="shelfline"></div><div class="counter"></div><div class="reflect"></div>
+   <section class="scene" id="scene"><div class="wall"></div><div class="shelfline"></div><div class="backlight"></div><div class="counter"></div><div class="reflect"></div>
      <div class="refPhoto"><img src="${PHOTOS[R.id]}" alt=""><span>${t("ref")}</span></div>
      <div class="sideWrap off" id="side"></div>
      <div class="cupWrap" id="cup"></div>
