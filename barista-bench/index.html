@@ -32,8 +32,8 @@
   color-scheme:dark;
 }
 *{box-sizing:border-box}
-html,body{height:100%}
-body{background:var(--roast);color:var(--crema);font-family:var(--body);font-size:15px;line-height:1.55;-webkit-font-smoothing:antialiased;overflow-x:hidden}
+html{height:100%}body{min-height:100%}
+body{background:var(--roast);color:var(--crema);font-family:var(--body);font-size:15px;line-height:1.55;-webkit-font-smoothing:antialiased;overflow-x:hidden;overflow-x:clip}
 body::before{content:"";position:fixed;inset:0;pointer-events:none;z-index:0;
   background:radial-gradient(900px 500px at 15% -10%,rgba(210,154,82,.16),transparent 60%),radial-gradient(700px 500px at 100% 10%,rgba(160,80,40,.12),transparent 60%)}
 button{font:inherit;color:inherit;cursor:pointer;border:0;background:none}
@@ -96,6 +96,7 @@ header.top{display:flex;align-items:center;gap:14px;flex-wrap:wrap;padding-block
 
 /* station */
 .station{display:grid;grid-template-columns:290px minmax(0,1fr) 400px;gap:16px;padding-top:18px;align-items:start}
+.station .scene{position:sticky;top:calc(env(safe-area-inset-top,0px) + 12px);z-index:5}
 .panel{background:linear-gradient(180deg,var(--bean-2),var(--bean));border:1px solid var(--line);border-radius:18px;padding:16px;min-width:0}
 .back{display:inline-flex;align-items:center;gap:6px;font-size:13px;color:var(--crema-dim);margin-bottom:10px}
 .back svg{width:16px;height:16px}
@@ -132,7 +133,7 @@ header.top{display:flex;align-items:center;gap:14px;flex-wrap:wrap;padding-block
 .small{font-size:12.5px;color:var(--crema-dim)}
 
 /* scene */
-.scene{position:relative;height:560px;border-radius:22px;overflow:hidden;border:1px solid var(--line);isolation:isolate}
+.scene{position:relative;height:560px;max-height:calc(100vh - 32px);border-radius:22px;overflow:hidden;border:1px solid var(--line);isolation:isolate}
 .scene .wall{position:absolute;inset:0;background:
   radial-gradient(60px 60px at 12% 18%,rgba(255,196,120,.55),transparent 70%),
   radial-gradient(40px 40px at 30% 10%,rgba(255,170,90,.35),transparent 70%),
@@ -282,8 +283,8 @@ button,.item{touch-action:manipulation;-webkit-tap-highlight-color:transparent}
   .stageCard .hintText{flex-basis:100%;margin-top:4px}
   .stageCard .small{flex-basis:100%}
   #leftDyn .tipNote{margin-top:8px;font-size:12px;padding:7px 9px}
-  .station .scene{--sh:clamp(260px,40vh,360px);height:var(--sh)}
-  .station.practice .scene{--sh:clamp(240px,34vh,320px);position:sticky;top:env(safe-area-inset-top,0px);z-index:5;box-shadow:0 10px 24px rgba(0,0,0,.5)}
+  .station .scene{--sh:clamp(230px,34vh,320px);height:var(--sh);max-height:none;position:sticky;top:env(safe-area-inset-top,0px);z-index:5;box-shadow:0 12px 26px rgba(0,0,0,.55)}
+  .station.learn .scene{--sh:clamp(220px,32vh,300px)}
   .station .cupWrap{width:calc(var(--sh)*.56);bottom:7%}
   .station .sideWrap{width:calc(var(--sh)*.3);left:5%;bottom:10%}
   .refPhoto{width:54px;padding:4px;right:10px;top:10px}.refPhoto img{height:58px}.refPhoto span{font-size:8px}
